@@ -34,7 +34,7 @@ app.use(bodyParser.json()); // This middleware parses JSON-formatted request bod
  
    
 
-app.listen(port);
+//app.listen(port);
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
