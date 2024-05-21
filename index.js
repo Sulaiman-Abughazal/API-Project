@@ -2,7 +2,8 @@ import express from "express";
 import axios from "axios";
 import bodyParser from "body-parser";
 //var geoip = import("geoip-lite");
-const port = 3000;
+//const port = 3000;
+const port = process.env.PORT || 4000; //the render condition
 const app = express();
 app.use(bodyParser.json()); // This middleware parses JSON-formatted request bodies.
 //var port = 3000;
