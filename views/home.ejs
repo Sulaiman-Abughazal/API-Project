@@ -2,73 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Geolocation Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation and Weather Data</title>
 </head>
 <body>
-    <button onclick="sendLocation()" style="color: rgb(255, 0, 13);">Send Location </button>
-    <div id="status">Click the button to send your location.</div> <!-- Added a status div for user feedback -->
-    <script>
-        function updateStatus(message) {
-            document.getElementById('status').textContent = message;
-        }
+    <button id="sendLocation">Send My Location</button>
+    <div id="weatherInfo"></div>
 
-        function sendLocation() {
-            if ("geolocation" in navigator) {
-                updateStatus("Attempting to retrieve your location...");
-                navigator.geolocation.getCurrentPosition(success, handleError, {
-                    enableHighAccuracy: true, // This option is now enabled for better accuracy
-                    timeout: 10000,          // 10 seconds to get a reading
-                    maximumAge: 60000        // Accept a cached position up to 1 minute old
+    <script>
+        document.getElementById('sendLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    fetch('/location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            latitude: latitude,
+                            longitude: longitude
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const weatherDiv = document.getElementById('weatherInfo');
+                            weatherDiv.innerHTML = `Temperature: ${data.data.temperature}°C<br>
+                                                    Description: ${data.data.description}<br>
+                                                    City: ${data.data.city}`;
+                        } else {
+                            console.error('Failed to retrieve weather data');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                }, function(error) {
+                    console.error('Geolocation error:', error);
                 });
             } else {
-                updateStatus("Geolocation is not available in your browser.");
-                console.log('Geolocation is not available');
+                console.error('Geolocation is not supported by this browser.');
             }
-        }
-
-        function success(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            updateStatus("Location retrieved, sending data...");
-
-            fetch('/location', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ latitude, longitude })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                updateStatus("Location data sent successfully.");
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                updateStatus("Failed to send location data.");
-            });
-        }
-
-        function handleError(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    updateStatus("User denied the request for Geolocation.");
-                    console.error("User denied the request for Geolocation.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    updateStatus("Location information is unavailable.");
-                    console.error("Location information is unavailable.");
-                    break;
-                case error.TIMEOUT:
-                    updateStatus("The request to get user location timed out.");
-                    console.error("The request to get user location timed out.");
-                    break;
-                default:
-                    updateStatus("An unknown error occurred.");
-                    console.error("An unknown error occurred.");
-                    break;
-            }
-        }
+        });
     </script>
 </body>
 </html>

@@ -1,41 +1,64 @@
 import express from "express";
 import axios from "axios";
 import bodyParser from "body-parser";
-//var geoip = import("geoip-lite");
-const port = 6000;
-//const port = process.env.PORT || 4000; //the render condition
+
+const port = process.env.PORT || 3000; //the render condition
 const app = express();
+
 app.use(bodyParser.json()); // This middleware parses JSON-formatted request bodies.
-//var port = 3000;
-  app.use(express.static("public"));
-  app.use(bodyParser.urlencoded({ extended: true }));
+//it's a very important middleware !
+//when you expecting A json u have to use it 
+//it reads the raw data from the request and parse it to java object
+// you cant do parse to the request.body directly without this middleware
+//i think when the handler is waiting json i'ts the one that creat the req.body :o
+//without it there is no req.body :) !!
+//how it knows how to dealing with the data ?
+//the fetch function in the fronend should have this indise it :
+// headers: {
+ // 'Content-Type': 'application/json'
+//},
+//........................................................................................
+app.use(express.static("public"));
+app.use(bodyParser.urlencoded({ extended: true }));//for parsing bodies of requests that have the Content-Type:
+// header set to application/x-www-form-urlencoded/
+//if all the data that we waiting for is formated json i think we can drop whis middleware.
+//if I turn it off in this project the lon and lati still arrive correctly.
+//....................................................................................................
+const Api_key = "f077daa598aafb8d8bd59a95d1a8d271";
+
 
   app.get("/", (req, res) => {
     res.render("home.ejs");
-   // console.log(req);
   });
 
   app.post("/location", async (req, res) => {
-     try {
-      //const response = await axios.get("https://bored-api.appbrewery.com/filter?type=" + req.body.type + "&participants=" + req.body.participants);
-      //const response = await axios.get("https://bored-api.appbrewery.com/filter?type=" + req.body.type + "&participants=" + req.body.participants);
-      //const result = response.data;
-       //console.log(result[0]);
-       const { latitude, longitude } = req.body;
-       console.log(`Received latitude: ${latitude}, longitude: ${longitude}`);
-       //in google earth u have to put the latitude first then comma the longitude
-       res.status(200).json({ message: 'Data received successfullylengle' });
-     } catch (error) {
-       console.error("Failed to make request:", error.message);
-       res.render("index.ejs", {
-         error: error.message,
-       });
-     }
-   });
- 
-   
+    try {
+        const { latitude, longitude } = req.body; // Extract latitude and longitude from the request body
+        const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${Api_key}&units=metric`);
+        const weatherData = response.data;
 
-//app.listen(port);
+        // Send a structured response containing the weather data
+        res.json({
+            success: true,
+            data: {
+                temperature: weatherData.main.temp,
+                description: weatherData.weather[0].desdription,
+                city: weatherData.name
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching weather data:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve weather data",
+            error: error.message
+        });
+    }
+});
+
+
+
+
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
