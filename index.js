@@ -3,7 +3,6 @@ import axios from "axios";
 import bodyParser from "body-parser";
 import 'dotenv/config';
 
-const apiKey = process.env.API_KEY;
 const port = process.env.PORT
 
 const app = express();
@@ -27,7 +26,8 @@ app.use(bodyParser.urlencoded({ extended: true }));//for parsing bodies of reque
 //if all the data that we waiting for is formated json i think we can drop whis middleware.
 //if I turn it off in this project the lon and lati still arrive correctly.
 //....................................................................................................
-const Api_key = apiKey;
+
+const Api_key = process.env.API_KEY;
 
 
   app.get("/", (req, res) => {
