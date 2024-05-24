@@ -1,8 +1,11 @@
 import express from "express";
 import axios from "axios";
 import bodyParser from "body-parser";
+import 'dotenv/config';
 
-const port = process.env.PORT || 3000; //the render condition
+const apiKey = process.env.API_KEY;
+const port = process.env.PORT
+
 const app = express();
 
 app.use(bodyParser.json()); // This middleware parses JSON-formatted request bodies.
@@ -24,7 +27,7 @@ app.use(bodyParser.urlencoded({ extended: true }));//for parsing bodies of reque
 //if all the data that we waiting for is formated json i think we can drop whis middleware.
 //if I turn it off in this project the lon and lati still arrive correctly.
 //....................................................................................................
-const Api_key = "f077daa598aafb8d8bd59a95d1a8d271";
+const Api_key = apiKey;
 
 
   app.get("/", (req, res) => {
@@ -42,7 +45,6 @@ const Api_key = "f077daa598aafb8d8bd59a95d1a8d271";
             success: true,
             data: {
                 temperature: weatherData.main.temp,
-                description: weatherData.weather[0].desdription,
                 city: weatherData.name
             }
         });

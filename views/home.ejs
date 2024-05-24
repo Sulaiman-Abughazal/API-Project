@@ -4,45 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geolocation and Weather Data</title>
+    <style>
+        #weatherInfo {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: none; /* Initially hidden */
+        }
+    </style>
 </head>
 <body>
     <button id="sendLocation">Send My Location</button>
     <div id="weatherInfo"></div>
 
+    <h1 style="color: blueviolet;">Fakhar</h1>
+    <h1 style="color: blueviolet;">Sofia</h1>
+
     <script>
         document.getElementById('sendLocation').addEventListener('click', function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-
-                    fetch('/location', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            latitude: latitude,
-                            longitude: longitude
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const weatherDiv = document.getElementById('weatherInfo');
-                            weatherDiv.innerHTML = `Temperature: ${data.data.temperature}°C<br>
-                                                    Description: ${data.data.description}<br>
-                                                    City: ${data.data.city}`;
-                        } else {
-                            console.error('Failed to retrieve weather data');
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                }, function(error) {
-                    console.error('Geolocation error:', error);
-                });
-            } else {
+            if (!navigator.geolocation) {
                 console.error('Geolocation is not supported by this browser.');
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            // Check permission status first
+            navigator.permissions.query({name: 'geolocation'}).then(function(permissionStatus) {
+                // If the state is 'prompt', it will ask for permission upon calling getCurrentPosition
+                if (permissionStatus.state === 'denied') {
+                    alert('Geolocation permission has been denied. Please enable it to use this feature.');
+                    return;
+                }
+                
+                // This will trigger permission prompt if needed and will execute directly if already granted
+                navigator.geolocation.getCurrentPosition(handlePosition, handleError, {timeout: 10000});
+            });
+
+            function handlePosition(position) {
+                const { latitude, longitude } = position.coords;
+
+                fetch('/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ latitude, longitude })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayWeather(data);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('Error fetching weather data. Please try again.');
+                });
+            }
+
+            function handleError(error) {
+                console.error('Geolocation error:', error);
+                alert('Error obtaining location. Please try again.');
+            }
+
+            function displayWeather(data) {
+                if (!data.success) {
+                    console.error('Failed to retrieve weather data');
+                    alert('Failed to retrieve weather data');
+                    return;
+                }
+
+                const weatherDiv = document.getElementById('weatherInfo');
+                weatherDiv.innerHTML = `Temperature: ${data.data.temperature}°C<br>
+                                        City: ${data.data.city}`;
+                weatherDiv.style.display = 'block'; // Show the weather info
             }
         });
     </script>
